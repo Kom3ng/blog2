@@ -1,0 +1,33 @@
+---
+import { Image } from 'astro:assets';
+import type { CollectionEntry } from 'astro:content';
+import BaseHead from '../components/BaseHead.astro';
+import FormattedDate from '../components/FormattedDate.astro';
+
+type Props = CollectionEntry<'blog'>['data'];
+
+const { title, date, tags } = Astro.props;
+---
+
+<html lang="en">
+	<head>
+		<BaseHead title={title} description={title} />
+	</head>
+
+	<body>
+		<main>
+			<article>
+				<div class="prose">
+					<div class="title">
+						<div class="date">
+							<FormattedDate date={date} />
+						</div>
+						<h1>{title}</h1>
+						<hr />
+					</div>
+					<slot />
+				</div>
+			</article>
+		</main>
+	</body>
+</html>
