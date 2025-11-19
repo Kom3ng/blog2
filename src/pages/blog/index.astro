@@ -13,17 +13,18 @@ const posts = (await getCollection('blog'))
 	</head>
 	<body>
 		<main>
-			<section>
-				<ul>
-					{
-						posts.map((post) => (
-								<a href={`/blog/${post.id}/`}>
-									<h4 class="title">{post.data.title}</h4>
-								</a>
-						))
-					}
-				</ul>
-			</section>
+            <h1>Index</h1>
+            <ul>
+                {
+                    posts.map((post) => (
+                           <li>
+                               <a style="display: inline-block" href={`/blog/${post.id}/`}>
+                                   <h4 class="title">{post.data.title}</h4>
+                               </a>
+                           </li>
+                    ))
+                }
+            </ul>
 		</main>
 	</body>
 </html>

@@ -1,5 +1,4 @@
 ---
-import { Image } from 'astro:assets';
 import type { CollectionEntry } from 'astro:content';
 import BaseHead from '../components/BaseHead.astro';
 import FormattedDate from '../components/FormattedDate.astro';
@@ -17,12 +16,18 @@ const { title, date, tags } = Astro.props;
 	<body>
 		<main>
 			<article>
-				<div class="prose">
-					<div class="title">
-						<div class="date">
-							<FormattedDate date={date} />
-						</div>
-						<h1>{title}</h1>
+				<div>
+					<div>
+						<div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                        }}>
+                            <h1>{title}</h1>
+                            <div class="date">
+                                <FormattedDate date={date} />
+                            </div>
+                        </div>
 						<hr />
 					</div>
 					<slot />

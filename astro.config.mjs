@@ -8,4 +8,9 @@ import { defineConfig } from 'astro/config';
 export default defineConfig({
 	site: 'https://blog.okay.moe',
 	integrations: [mdx(), sitemap()],
+    markdown: {
+        shikiConfig: {
+            theme: 'snazzy-light',
+        }
+    }
 });
