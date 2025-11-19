@@ -20,11 +20,17 @@ jobs:
         with:
           node-version: '18'
 
+      - name: Setup pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
+          pnpm -v
+
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Build
-        run: npm run build
+        run: pnpm build
 
       - name: Configure GitHub Pages
         id: pages
