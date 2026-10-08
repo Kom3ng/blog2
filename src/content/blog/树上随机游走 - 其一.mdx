@@ -1,0 +1,163 @@
+---
+title: 树上随机游走 - 其一
+date: 2026-10-08 20:13:00
+tags: [graph]
+---
+
+
+引入: [CodeForces - 1823F](https://codeforces.com/problemset/problem/1823/F)
+
+如果你读过[oiwiki](https://oi-wiki.org/graph/tree-random-walk/)上树上随机游走一章，会发现它直接给出了$f(x), g(x)$两个函数，并转化为简单的递推，从而解决问题。
+
+不过想要自然的给出这两个函数，需要对树上问题有深入的理解。
+
+例如你可以对上面这道题使用相同的办法，这还是挺困难的。
+
+但实际上，对应于这一类从$s$到$t$的问题，有一个十分通用的方法。
+
+以[CodeForces - 1823F](https://codeforces.com/problemset/problem/1823/F)来说，我们直接设期望$E_u$为从 $c(u)$的期望，
+然后利用期望公式(或者直觉)得到:
+
+$E_u=\Sigma_{v \in son_u} \frac{E_v}{deg_v} + \frac{E_f}{deg_f} + [u=s]$，
+
+其中$f$是$u$的父节点，$v$是$u$的子节点，$deg$为一点的度，然后根据题意初始时$c(s)$为1，当$f=t$时，由于 $t$ 不再向外转移， $E_f$ 项的系数为 $0$
+
+这还挺好理解的，$u$周围的点都有$deg$的概率到达$u$。并且将父节点分开写，因为之后又用，毕竟这是树而不是图，利用好父节点可以更轻松解决许多问题。
+
+接下来给出一个暴论: $E_v=A_vE_u+B_v, v \in son_u$。这是说，树上任何一个点的状态都能用父节点表示。其中$A_v,B_v$是和$v$有关的系数。
+
+接下来直接将它带进原来的式子，得到
+
+$E_u=\Sigma_{v \in son_u} \frac{A_vE_u+B_v}{deg_v} + \frac{E_f}{deg_f} + [u=s]$，
+
+然后$E_v$就消失了?!化简得到
+
+$E_u=\frac{1}{deg_f(1-\Sigma_{v \in son_u} \frac{A_v}{deg_v})}E_f+\frac{\Sigma_{v \in son_u} \frac{B_v}{deg_v} + [u=s]}{(1-\Sigma_{v \in son_u} \frac{A_v}{deg_v})}$，
+
+然后这就解出了
+
+$A_u=\frac{1}{deg_f(1-\Sigma_{v \in son_u} \frac{A_v}{deg_v})}, B_u=\frac{\Sigma_{v \in son_u} \frac{B_v}{deg_v} + [u=s]}{(1-\Sigma_{v \in son_u} \frac{A_v}{deg_v})}$。
+
+注意到$A_u,B_u$只与$A_v,B_v$有关，只要从底向上dfs计算就行了。
+
+其次，考虑把$t$作为树的根，这样有很多好处。我们说$t$是吸收态，因为游走到$t$点就结束了。这样，所有路径都汇聚到了根，会简单一些。
+
+最后，本题有其他解法，但是这种解法很公式化，比较简单。
+
+参考代码:
+```cpp
+#include <bits/stdc++.h>
+#define all(x) (x).begin(), (x).end()
+#define rall(x) (x).rbegin(), (x).rend()
+#define sz(x) static_cast<int>((x).size())
+#define rep(i, a, b) for (int i = (a); i < (b); ++i)
+#define forn(i, n) rep(i, 0, n)
+#define rep1(i, a, b) for (int i = (a); i <= (b); ++i)
+#define per(i, a, b) for (int i = (b) - 1; i >= (a); --i)
+#define fore(e, c) for (auto e:(c))
+#define loop while(true)
+
+using namespace std;
+using i32 = int32_t;
+using i64 = int64_t;
+using i128 = __int128_t;
+using u128 = __uint128_t;
+using u32 = uint32_t;
+using u64 = uint64_t;
+using f32 = float;
+using f64 = double;
+using f128 = long double;
+
+constexpr bool multi_test = false;
+constexpr i64 mod = 998244353;
+constexpr i32 maxn = 2e5+5;
+i32 head[maxn],tot;
+struct {
+    i32 to,nxt;
+} es[maxn*2];
+i32 d[maxn] {};
+i64 a[maxn],b[maxn],e[maxn];
+i32 n,s,t;
+i64 exgcd(i64 a, i64 b, i64 &x, i64 &y) {
+    i64 x0=1,y0=0;
+    i64 x1=0,y1=1;
+    while (b!=0) {
+        i64 q=a/b;
+        i64 r=a%b;
+        a=b;
+        b=r;
+        i64 next_x=x0-q*x1;
+        i64 next_y=y0-q*y1;
+        x0=x1,y0=y1;
+        x1=next_x,y1=next_y;
+    }
+    x=x0,y=y0;
+    return a;
+}
+
+i64 inv(i64 a, i64 m) {
+    i64 x,y;
+    i64 g=exgcd(a,m,x,y);
+    if (g!=1) return -1;
+    return (x%m+m)%m;
+}
+
+i64 inv(i64 x) {
+    return inv(x,mod);
+}
+
+void add_e(i32 u, i32 v) {
+    es[++tot]={v,head[u]};
+    head[u]=tot;
+    es[++tot]={u,head[v]};
+    head[v]=tot;
+    d[u]++,d[v]++;
+}
+
+void dfs1(i32 u, i32 f) {
+    i64 av=0,bv=0;
+    for (i32 i=head[u];~i;i=es[i].nxt) {
+        i32 v=es[i].to;
+        if (v==f) continue;
+        dfs1(v,u);
+        av=(av+a[v]*inv(d[v])%mod)%mod;
+        bv=(bv+b[v]*inv(d[v])%mod)%mod;
+    }
+    if (u==t) return;
+    a[u]=f==t?0:inv(d[f]*((1-av+mod)%mod)%mod);
+    b[u]=(bv+(u==s))*inv((1-av+mod)%mod)%mod;
+}
+
+void dfs2(i32 u, i32 f) {
+    for (i32 i=head[u];~i;i=es[i].nxt) {
+        i32 v=es[i].to;
+        if (v==f) continue;
+        e[v]=(a[v]*e[u]%mod+b[v])%mod;
+        dfs2(v,u);
+    }
+}
+
+void solve() {
+    cin>>n>>s>>t;
+    tot=-1;
+    rep1(i,1,n) head[i]=-1;
+    forn(i,n-1) {
+        i32 u,v;
+        cin>>u>>v;
+        add_e(u,v);
+    }
+    e[t]=1;
+    dfs1(t,0);
+    dfs2(t,0);
+    rep1(i,1,n) cout<<e[i]<<' ';
+}
+
+signed main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t = 1;
+    if (multi_test) cin >> t;
+    while (t--) solve();
+}
+
+```
